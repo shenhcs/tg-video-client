@@ -20,6 +20,7 @@ import {
   Add as AddIcon,
   VideoFile as ClipsIcon,
   Refresh as RefreshIcon,
+  Storage as DatabaseIcon,
 } from '@mui/icons-material';
 import { videoService } from '../services/api';
 
@@ -30,6 +31,7 @@ const menuItems = [
   { text: 'Create Clip', path: '/clips/create', icon: <AddIcon /> },
   { text: 'Videos', path: '/videos', icon: <VideoIcon /> },
   { text: 'Clips', path: '/clips', icon: <ClipsIcon /> },
+  { text: 'Database', path: '/database', icon: <DatabaseIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
 

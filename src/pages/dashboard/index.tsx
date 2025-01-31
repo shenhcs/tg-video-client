@@ -1,95 +1,64 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Tabs,
-  Tab,
-  Paper,
-} from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  ContentCut as ClipIcon,
-} from '@mui/icons-material';
-import ClipCreator from './ClipCreator';
+import React from 'react';
+import { Grid } from '@mui/material';
+import StatCard from '../../components/StatCard';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`dashboard-tabpanel-${index}`}
-      aria-labelledby={`dashboard-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `dashboard-tab-${index}`,
-    'aria-controls': `dashboard-tabpanel-${index}`,
+interface DashboardProps {
+  stats: {
+    untrackedVideos: number;
+    unuploadedVideos: number;
+    uploadedVideosWithoutClips: number;
+    uploadedVideosWithClips: number;
+    unuploadedClips: number;
+    uploadedClips: number;
   };
+  onRefresh: () => void;
 }
 
-export default function Dashboard() {
-  const [tabValue, setTabValue] = useState(0);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
+const Dashboard: React.FC<DashboardProps> = ({ stats, onRefresh }) => {
+  const handleAddAllToDatabase = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/videos/track-all', {
+        method: 'POST',
+      });
       
-      <Paper sx={{ width: '100%', mt: 3 }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="dashboard tabs"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab 
-            icon={<DashboardIcon />} 
-            label="Overview" 
-            {...a11yProps(0)}
-          />
-          <Tab 
-            icon={<ClipIcon />} 
-            label="Create Clip" 
-            {...a11yProps(1)}
-          />
-        </Tabs>
+      if (!response.ok) {
+        throw new Error('Failed to add videos to database');
+      }
+      
+      // Refresh the dashboard stats
+      onRefresh();
+    } catch (error) {
+      console.error('Error adding videos to database:', error);
+    }
+  };
 
-        <TabPanel value={tabValue} index={0}>
-          <Typography variant="h6" gutterBottom>
-            Welcome to Video Clipper
-          </Typography>
-          <Typography variant="body1">
-            Here you can manage your videos and create clips. Use the tabs above to navigate between different features.
-          </Typography>
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          <ClipCreator />
-        </TabPanel>
-      </Paper>
-    </Box>
+  return (
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={4}>
+        <StatCard 
+          title="Videos Not in Database" 
+          value={stats.untrackedVideos} 
+          onAction={stats.untrackedVideos > 0 ? handleAddAllToDatabase : undefined}
+          actionLabel={stats.untrackedVideos > 0 ? "Add All to Database" : undefined}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <StatCard title="Videos Without Clips" value={stats.uploadedVideosWithoutClips} />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <StatCard title="Videos With Clips" value={stats.uploadedVideosWithClips} />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <StatCard title="Unuploaded Videos" value={stats.unuploadedVideos} />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <StatCard title="Unuploaded Clips" value={stats.unuploadedClips} />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <StatCard title="Uploaded Clips" value={stats.uploadedClips} />
+      </Grid>
+    </Grid>
   );
-} 
+};
+
+export default Dashboard; 

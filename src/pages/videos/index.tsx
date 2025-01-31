@@ -14,18 +14,22 @@ import {
   Divider,
   Button,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Pause, PlayArrow } from '@mui/icons-material';
 import { videoService, Video } from '../../services/api';
 import ReactPlayer from 'react-player';
 
 const VideoCard = ({ video, type, onDelete }: { 
   video: Video; 
-  type: 'uploaded' | 'unuploaded';
+  type: 'tracked' | 'untracked';
   onDelete: (id: number) => void;
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [progress, setProgress] = React.useState(0);
+  const [startTime, setStartTime] = React.useState(0);
+  const [endTime, setEndTime] = React.useState(0);
+  const playerRef = React.useRef<ReactPlayer>(null);
 
   React.useEffect(() => {
     console.log('Video data:', video);
@@ -46,6 +50,26 @@ const VideoCard = ({ video, type, onDelete }: {
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
+  };
+
+  const handleProgress = (state: { playedSeconds: number }) => {
+    setProgress(state.playedSeconds);
+  };
+
+  const handleSetStartTime = () => {
+    setStartTime(progress);
+  };
+
+  const handleSetEndTime = () => {
+    setEndTime(progress);
+  };
+
+  const formatTime = (seconds: number) => {
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
   };
 
   const handleUpload = async () => {
@@ -80,37 +104,99 @@ const VideoCard = ({ video, type, onDelete }: {
         {error ? (
           <Typography color="error" sx={{ p: 2 }}>{error}</Typography>
         ) : (
-          <ReactPlayer
-            url={videoUrl}
-            width="100%"
-            height="100%"
-            style={{ position: 'absolute', top: 0, left: 0 }}
-            playing={isPlaying}
-            controls={true}
-            onError={handleError}
-            config={{
-              file: {
-                attributes: {
-                  crossOrigin: "anonymous"
+          <>
+            <ReactPlayer
+              ref={playerRef}
+              url={videoUrl}
+              width="100%"
+              height="100%"
+              style={{ position: 'absolute', top: 0, left: 0 }}
+              playing={isPlaying}
+              controls={true}
+              onProgress={handleProgress}
+              onError={handleError}
+              config={{
+                file: {
+                  attributes: {
+                    crossOrigin: "anonymous"
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+            <Box 
+              sx={{ 
+                position: 'absolute', 
+                bottom: 0, 
+                left: 0, 
+                right: 0,
+                background: 'rgba(0,0,0,0.7)',
+                padding: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <IconButton 
+                onClick={handlePlayPause} 
+                sx={{ color: 'white' }}
+                size="small"
+              >
+                {isPlaying ? <Pause /> : <PlayArrow />}
+              </IconButton>
+            </Box>
+          </>
         )}
       </Box>
-      <CardContent sx={{ position: 'relative' }}>
-        <IconButton
-          size="small"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-          onClick={handleMenuOpen}
-        >
-          <MoreVertIcon />
-        </IconButton>
-        <Typography variant="h6" noWrap>{video.title}</Typography>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>{video.title}</Typography>
+          <IconButton
+            size="small"
+            onClick={handleMenuOpen}
+          >
+            <MoreVertIcon />
+          </IconButton>
+        </Box>
+        
+        <Box sx={{ mb: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Start: {formatTime(startTime)}
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleSetStartTime}
+                  color="primary"
+                >
+                  Set
+                </Button>
+              </Box>
+            </Grid>
+            <Grid item xs={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  End: {formatTime(endTime)}
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleSetEndTime}
+                  color="primary"
+                >
+                  Set
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
         <Typography variant="body2" color="text.secondary">
-          Duration: {video.duration}
+          Current: {formatTime(progress)} • Duration: {video.duration}
         </Typography>
-        {type === 'unuploaded' ? (
+        {type === 'untracked' ? (
           <Typography variant="body2" color="text.secondary">
             Size: {video.size} • Created: {video.createdAt}
           </Typography>
@@ -125,7 +211,7 @@ const VideoCard = ({ video, type, onDelete }: {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {type === 'unuploaded' ? (
+        {type === 'untracked' ? (
           [
             <MenuItem key="upload" onClick={handleUpload}>Upload</MenuItem>,
             <MenuItem key="clip" onClick={handleMenuClose}>Create Clip</MenuItem>,
@@ -146,11 +232,11 @@ const VideoCard = ({ video, type, onDelete }: {
 const Videos = () => {
   const [tabValue, setTabValue] = React.useState(0);
   const [videos, setVideos] = React.useState<{
-    uploaded: Video[];
-    unuploaded: Video[];
+    tracked: Video[];
+    untracked: Video[];
   }>({
-    uploaded: [],
-    unuploaded: [],
+    tracked: [],
+    untracked: [],
   });
   const [error, setError] = React.useState<string | null>(null);
 
@@ -164,7 +250,7 @@ const Videos = () => {
       setVideos(data);
     } catch (error) {
       console.error('Failed to fetch videos:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch videos');
+      setError('Failed to load videos');
     }
   };
 
@@ -172,14 +258,10 @@ const Videos = () => {
     fetchVideos();
   }, []);
 
-  React.useEffect(() => {
-    console.log('Current videos state:', videos);
-  }, [videos]);
-
   const handleDelete = (id: number) => {
     setVideos(prev => ({
-      uploaded: prev.uploaded.filter(v => v.id !== id),
-      unuploaded: prev.unuploaded.filter(v => v.id !== id),
+      tracked: prev.tracked.filter(v => v.id !== id),
+      untracked: prev.untracked.filter(v => v.id !== id)
     }));
   };
 
@@ -187,60 +269,85 @@ const Videos = () => {
     setTabValue(newValue);
   };
 
+  const handleTrackVideo = async (video: Video) => {
+    try {
+      // Call scan_videos endpoint to add video to database
+      await fetch('http://localhost:8000/refresh', {
+        method: 'POST'
+      });
+      // Refresh video list
+      fetchVideos();
+    } catch (error) {
+      console.error('Failed to track video:', error);
+    }
+  };
+
   if (error) {
-    return (
-      <Box>
-        <Typography color="error">Error: {error}</Typography>
-        <Button onClick={fetchVideos}>Retry</Button>
-      </Box>
-    );
+    return <Typography color="error">{error}</Typography>;
   }
 
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 4 }}>Videos</Typography>
       
-      <Tabs 
-        value={tabValue} 
-        onChange={handleTabChange}
-        sx={{ mb: 3 }}
-      >
-        <Tab label={`Unuploaded Videos (${videos.unuploaded?.length || 0})`} />
-        <Tab label={`Uploaded Videos (${videos.uploaded?.length || 0})`} />
+      <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 4 }}>
+        <Tab label="Tracked Videos" />
+        <Tab label="Untracked Videos" />
       </Tabs>
 
       {tabValue === 0 && (
-        <>
-          <Typography variant="h6" sx={{ mb: 2 }}>Unuploaded Videos</Typography>
-          {!videos.unuploaded?.length ? (
-            <Typography>No unuploaded videos found.</Typography>
-          ) : (
-            <Grid container spacing={3}>
-              {videos.unuploaded.map((video) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={video.id}>
-                  <VideoCard video={video} type="unuploaded" onDelete={handleDelete} />
-                </Grid>
-              ))}
+        <Grid container spacing={3}>
+          {videos.tracked.map((video) => (
+            <Grid item xs={12} sm={6} md={4} key={video.id}>
+              <VideoCard
+                video={video}
+                type="tracked"
+                onDelete={handleDelete}
+              />
+            </Grid>
+          ))}
+          {videos.tracked.length === 0 && (
+            <Grid item xs={12}>
+              <Typography variant="body1" color="text.secondary" align="center">
+                No tracked videos found
+              </Typography>
             </Grid>
           )}
-        </>
+        </Grid>
       )}
 
       {tabValue === 1 && (
-        <>
-          <Typography variant="h6" sx={{ mb: 2 }}>Uploaded Videos</Typography>
-          {videos.uploaded.length === 0 ? (
-            <Typography>No uploaded videos found.</Typography>
-          ) : (
-            <Grid container spacing={3}>
-              {videos.uploaded.map((video) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={video.id}>
-                  <VideoCard video={video} type="uploaded" onDelete={handleDelete} />
-                </Grid>
-              ))}
+        <Grid container spacing={3}>
+          {videos.untracked.map((video) => (
+            <Grid item xs={12} sm={6} md={4} key={video.id}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {video.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    Size: {video.size} • Duration: {video.duration}
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    onClick={() => handleTrackVideo(video)}
+                    fullWidth
+                  >
+                    Track Video
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+          {videos.untracked.length === 0 && (
+            <Grid item xs={12}>
+              <Typography variant="body1" color="text.secondary" align="center">
+                No untracked videos found
+              </Typography>
             </Grid>
           )}
-        </>
+        </Grid>
       )}
     </Box>
   );
