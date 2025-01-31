@@ -7,6 +7,7 @@ interface StatCardProps {
   description?: string;
   onAction?: () => void;
   actionLabel?: string;
+  disabled?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
@@ -14,7 +15,8 @@ const StatCard: React.FC<StatCardProps> = ({
   value, 
   description,
   onAction, 
-  actionLabel 
+  actionLabel,
+  disabled = false
 }) => {
   return (
     <Card>
@@ -36,6 +38,7 @@ const StatCard: React.FC<StatCardProps> = ({
               variant="contained" 
               color="secondary" 
               onClick={onAction}
+              disabled={disabled}
               sx={{ mt: 2 }}
             >
               {actionLabel}
