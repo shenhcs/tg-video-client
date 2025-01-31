@@ -12,7 +12,7 @@ const api = axios.create({
 export interface Video {
   id: number;
   title: string;
-  thumbnail: string;
+  thumbnail?: string;
   duration: string;
   size?: string;
   views?: number;
@@ -20,6 +20,7 @@ export interface Video {
   uploadedAt?: string;
   path?: string;
   clipCount?: number;
+  k2s_status?: string;
 }
 
 export const videoService = {
@@ -44,9 +45,15 @@ export const videoService = {
   getVideos: async () => {
     try {
       console.log('Fetching videos...');
-      const response = await api.get<{ uploaded: Video[], unuploaded: Video[] }>('/videos');
+      const response = await api.get('/videos');
       console.log('Videos response:', response.data);
-      return response.data;
+      
+      // Transform the response to match the expected format
+      const videos = response.data.tracked || [];
+      return {
+        uploaded: videos.filter((v: Video) => v.k2s_status === 'uploaded'),
+        unuploaded: videos.filter((v: Video) => v.k2s_status !== 'uploaded')
+      };
     } catch (error) {
       console.error('Error fetching videos:', error);
       throw error;

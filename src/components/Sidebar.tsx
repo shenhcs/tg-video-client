@@ -28,7 +28,7 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { text: 'Create Clip', path: '/clips/create', icon: <AddIcon /> },
+  { text: 'Clip Creator', path: '/clip-creator', icon: <AddIcon /> },
   { text: 'Videos', path: '/videos', icon: <VideoIcon /> },
   { text: 'Clips', path: '/clips', icon: <ClipsIcon /> },
   { text: 'Database', path: '/database', icon: <DatabaseIcon /> },

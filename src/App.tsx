@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/dashboard';
-import Videos from './pages/videos';
-import Uploads from './pages/uploads';
-import Settings from './pages/settings';
-import CreateClip from './pages/clips/create';
-import PendingClips from './pages/clips/pending';
-import ProcessingClips from './pages/clips/processing';
-import CompletedClips from './pages/clips/completed';
-import Clips from './pages/clips';
-import DatabaseView from './pages/database';
+import Dashboard from './pages/Dashboard';
+import Videos from './pages/Videos';
+import Uploads from './pages/Uploads';
+import Settings from './pages/Settings';
+import ClipCreator from './pages/ClipCreator';
+import Clips from './pages/Clips';
+import Database from './pages/Database';
 
 interface Stats {
   untrackedVideos: number;
@@ -55,8 +52,9 @@ function App() {
           <Route path="/" element={<Dashboard stats={stats} onRefresh={fetchStats} />} />
           <Route path="/videos/*" element={<Videos />} />
           <Route path="/uploads/*" element={<Uploads />} />
+          <Route path="/clip-creator" element={<ClipCreator />} />
           <Route path="/clips/*" element={<Clips />} />
-          <Route path="/database" element={<DatabaseView />} />
+          <Route path="/database" element={<Database />} />
           <Route path="/settings/*" element={<Settings />} />
         </Routes>
       </Layout>

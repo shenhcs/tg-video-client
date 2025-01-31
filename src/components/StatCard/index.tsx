@@ -4,11 +4,18 @@ import { Card, CardContent, Typography, Box, Button } from '@mui/material';
 interface StatCardProps {
   title: string;
   value: number;
+  description?: string;
   onAction?: () => void;
   actionLabel?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, onAction, actionLabel }) => {
+const StatCard: React.FC<StatCardProps> = ({ 
+  title, 
+  value, 
+  description,
+  onAction, 
+  actionLabel 
+}) => {
   return (
     <Card>
       <CardContent>
@@ -19,6 +26,11 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, onAction, actionLabel
           <Typography variant="h4" component="div" color="primary">
             {value}
           </Typography>
+          {description && (
+            <Typography variant="body2" color="text.secondary" align="center">
+              {description}
+            </Typography>
+          )}
           {onAction && actionLabel && (
             <Button 
               variant="contained" 
