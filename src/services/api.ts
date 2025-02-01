@@ -48,12 +48,8 @@ export const videoService = {
       const response = await api.get('/videos');
       console.log('Videos response:', response.data);
       
-      // Transform the response to match the expected format
-      const videos = response.data.tracked || [];
-      return {
-        uploaded: videos.filter((v: Video) => v.k2s_status === 'uploaded'),
-        unuploaded: videos.filter((v: Video) => v.k2s_status !== 'uploaded')
-      };
+      // The response already has uploaded and unuploaded arrays
+      return response.data;
     } catch (error) {
       console.error('Error fetching videos:', error);
       throw error;
